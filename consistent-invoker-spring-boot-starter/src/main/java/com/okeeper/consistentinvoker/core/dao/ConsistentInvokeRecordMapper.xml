@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.okeeper.consistentinvoker.core.dao.ConsistentInvokeRecordMapper" >
+    <resultMap id="BaseResultMap" type="com.okeeper.consistentinvoker.core.model.ConsistentInvokeRecord" >
+        <result column="id" property="id" jdbcType="BIGINT" />
+        <result column="invoke_key" property="invokeKey" jdbcType="VARCHAR" />
+        <result column="application_name" property="applicationName" jdbcType="VARCHAR" />
+        <result column="class_name" property="className" jdbcType="VARCHAR" />
+        <result column="method_name" property="methodName" jdbcType="VARCHAR" />
+        <result column="parameter_types" property="parameterTypes" jdbcType="VARCHAR" />
+        <result column="arguments" property="arguments" jdbcType="VARCHAR" />
+        <result column="status" property="status" jdbcType="INTEGER" />
+        <result column="spring_el" property="springEl" jdbcType="VARCHAR" />
+        <result column="return_object" property="returnObject" jdbcType="VARCHAR" />
+        <result column="error_message" property="errorMessage" jdbcType="VARCHAR" />
+
+        <result column="retry_count" property="retryCount" jdbcType="INTEGER" />
+        <result column="next_retry_time" property="nextRetryTime" jdbcType="TIMESTAMP" />
+        <result column="max_retry_count" property="maxRetryCount" jdbcType="INTEGER" />
+
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP" />
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+    id, invoke_key,application_name, class_name, method_name,parameter_types, arguments, status, spring_el, return_object, retry_count,next_retry_time, max_retry_count, create_time, update_time
+  </sql>
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Long" >
+        select
+        <include refid="Base_Column_List" />
+        from t_consistent_invoker_record
+        where id = #{id,jdbcType=BIGINT}
+    </select>
+
+    <insert id="insertSelective" parameterType="com.okeeper.consistentinvoker.core.model.ConsistentInvokeRecord" useGeneratedKeys="true" keyProperty="id">
+        insert into t_consistent_invoker_record
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                id,
+            </if>
+            <if test="invokeKey != null" >
+                `invoke_key`,
+            </if>
+            <if test="tid != null" >
+                `tid`,
+            </if>
+            <if test="applicationName != null" >
+                application_name,
+            </if>
+            <if test="className != null" >
+                class_name,
+            </if>
+            <if test="methodName != null">
+                method_name,
+            </if>
+            <if test="parameterTypes != null" >
+                parameter_types,
+            </if>
+            <if test="arguments != null" >
+                arguments,
+            </if>
+            <if test="status != null" >
+                status,
+            </if>
+            <if test="springEl != null" >
+                spring_el,
+            </if>
+            <if test="returnObject != null" >
+                return_object,
+            </if>
+            <if test="retryCount != null" >
+                retry_count,
+            </if>
+            <if test="maxRetryCount != null" >
+                max_retry_count,
+            </if>
+            <if test="nextRetryTime != null">
+                next_retry_time,
+            </if>
+            create_time,
+            update_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="id != null" >
+                #{id},
+            </if>
+            <if test="invokeKey != null" >
+                #{invokeKey},
+            </if>
+            <if test="tid != null" >
+                #{tid},
+            </if>
+            <if test="applicationName != null" >
+                #{applicationName},
+            </if>
+            <if test="className != null" >
+                #{className},
+            </if>
+            <if test="methodName != null">
+                #{methodName},
+            </if>
+            <if test="parameterTypes != null" >
+                #{parameterTypes},
+            </if>
+            <if test="arguments != null" >
+                #{arguments},
+            </if>
+            <if test="status != null" >
+                #{status},
+            </if>
+            <if test="springEl != null" >
+                #{springEl},
+            </if>
+            <if test="returnObject != null" >
+                #{returnObject},
+            </if>
+            <if test="retryCount != null" >
+                #{retryCount},
+            </if>
+            <if test="maxRetryCount != null" >
+                #{maxRetryCount},
+            </if>
+            <if test="nextRetryTime != null">
+                #{nextRetryTime},
+            </if>
+            now(),
+            now(),
+        </trim>
+    </insert>
+
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.okeeper.consistentinvoker.core.model.ConsistentInvokeRecord" >
+        update t_consistent_invoker_record
+        <set >
+            <if test="className != null" >
+                class_name = #{className,jdbcType=VARCHAR},
+            </if>
+            <if test="methodName != null">
+                method_name = #{methodName,jdbcType=VARCHAR},
+            </if>
+            <if test="parameterTypes != null" >
+                parameter_types = #{parameterTypes,jdbcType=VARCHAR},
+            </if>
+            <if test="arguments != null" >
+                arguments = #{arguments,jdbcType=VARCHAR},
+            </if>
+            <if test="status != null" >
+                status = #{status,jdbcType=VARCHAR},
+            </if>
+            <if test="springEl != null" >
+                spring_el = #{springEl,jdbcType=VARCHAR},
+            </if>
+            <if test="returnObject != null" >
+                return_object = #{returnObject,jdbcType=VARCHAR},
+            </if>
+            <if test="errorMessage != null" >
+                error_message = #{errorMessage,jdbcType=VARCHAR},
+            </if>
+            <if test="retryCount != null" >
+                retry_count = retry_count + 1,
+            </if>
+            <if test="nextRetryTime != null" >
+                next_retry_time = #{nextRetryTime},
+            </if>
+            <if test="maxRetryCount != null" >
+                max_retry_count = #{maxRetryCount,jdbcType=VARCHAR},
+            </if>
+            <if test="tid != null" >
+                tid = #{tid,jdbcType=VARCHAR},
+            </if>
+            update_time = now(),
+        </set>
+        where id = #{id,jdbcType=BIGINT}
+    </update>
+
+    <select id="queryWaitInvokeListByNextRetryTimePageList" parameterType="java.util.Map" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List"></include>
+    from t_consistent_invoker_record
+    where
+    status in
+    <foreach collection="statusList" open="(" close=")" separator="," item="status">
+        #{status}
+    </foreach>
+    and retry_count &lt; max_retry_count
+    and next_retry_time &lt;= DATE_ADD(now(),INTERVAL -1 MINUTE )
+    and next_retry_time >= DATE_ADD(now(),INTERVAL -7 DAY)
+    order by create_time asc
+     limit #{startRowNum},  #{pageSize}
+  </select>
+
+    <delete id="delete" parameterType="Long">
+        delete from t_consistent_invoker_record where id = #{id}
+    </delete>
+
+</mapper>
