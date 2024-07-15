@@ -21,7 +21,6 @@ import java.util.List;
 //@Transactional
 //@Rollback
 @Slf4j
-//@ActiveProfiles(profiles = "ut")
 @SpringBootTest(classes = ConsistentDemoApplication.class, webEnvironment= SpringBootTest.WebEnvironment.NONE)
 class ConsistentDemoApplicationTests {
 
@@ -175,7 +174,7 @@ class ConsistentDemoApplicationTests {
     public void testUsingSyncWithoutTxResult() {
         SkuStock skuStock = SkuStock.builder()
                 .name("abc")
-                .skuId(1L)
+                .skuId(null)
                 .stock(100L)
                 .build();
         skuService.syncWithoutTxUsingResult(skuStock);
@@ -207,7 +206,7 @@ class ConsistentDemoApplicationTests {
 
     @Test
     public void queryWaitInvokeListByNextRetryTimePageList() {
-        List<ConsistentInvokeRecord> listByNextRetryTimePageList = consistentInvokeRecordService.queryWaitInvokeListByNextRetryTimePageList(Arrays.asList(ConsistentInvokeRecordStatusEnum.FAIL.getType(), ConsistentInvokeRecordStatusEnum.WAIT_INVOKE.getType()), 1, 10);
+        List<ConsistentInvokeRecord> listByNextRetryTimePageList = consistentInvokeRecordService.queryWaitInvokeListByNextRetryTimePageList(Arrays.asList(ConsistentInvokeRecordStatusEnum.FAIL.getType(), ConsistentInvokeRecordStatusEnum.WAIT_INVOKE.getType()), 10);
         log.info(">>>>>" + JSON.toJSONString(listByNextRetryTimePageList));
     }
 

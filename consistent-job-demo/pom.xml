@@ -12,7 +12,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.okeeper</groupId>
-    <artifactId>consistent-job-application</artifactId>
+    <artifactId>consistent-job-demo</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 
     <dependencies>
@@ -24,7 +24,7 @@
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
+            <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <dependency>

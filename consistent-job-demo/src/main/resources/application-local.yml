@@ -1,18 +1,14 @@
-mybatis:
-  configuration:
-    map-underscore-to-camel-case: true
-    default-fetch-size: 50
-    default-statement-timeout: 5
+#spring:
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/business_db?characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true
+#    username: root
+#    password: xxxx
 
-spring:
-  application:
-    name: consistent-demo
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/business_db?characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true
-    username: root
-    password: xxxx
-
+# dubbo配置,当应用时job应用时,关闭dubbo 提供者
+dubbo:
+  enable: false
+# consistent-invoker主要配置
 consistent-invoker:
   enable: true
   # 是否启动xxl job,为true时将初始化XXlJob实现类到spring 容器中
@@ -28,7 +24,6 @@ consistent-invoker:
     url: jdbc:mysql://localhost:3306/consistent_call_db?characterEncoding=UTF-8&useSSL=false&allowMultiQueries=true
     username: root
     password: xxxx
-
 
 xxl:
   job:
@@ -48,23 +43,4 @@ xxl:
     admin:
       #调度中心部署地址，多个配置 ，分割
       addresses: http://127.0.0.1:8080/xxl-job-admin
-      #执行器token
-    accessToken:
 
-# dubbo配置
-# enableRetryProvider=true时必须配置
-dubbo:
-  registry:
-    address: nacos://registry:8848
-  config-center:
-    address: nacos://config-center:8848
-  protocol:
-    name: dubbo      #   固定使用dubbo协议，请不要修改
-    port: 32101       #   dubbo服务启动的端口号， 需要根据应用情况手动指定
-  overload:
-    # 超时时间（在线程池中，被判定为超时需满足的时间），默认为1500 (1.5秒)
-    checkTimeDefMillSec: 10000
-    # 超时包个数（达到超时包个数时，启动连续丢包模式）,默认为 5
-    timeoutCount: 100
-    # 连续丢包模式的丢包个数，默认为 20
-    dropCount: 0

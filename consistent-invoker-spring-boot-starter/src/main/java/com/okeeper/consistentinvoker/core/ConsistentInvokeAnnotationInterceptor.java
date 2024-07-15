@@ -20,14 +20,14 @@ public class ConsistentInvokeAnnotationInterceptor implements MethodInterceptor 
     }
 
     @Override
-    public Object invoke(MethodInvocation invocation) {
+    public Object invoke(MethodInvocation invocation) throws Throwable{
         Method method = invocation.getMethod();
         //获取注解属性
         ConsistentInvoke consistentInvoke = method.getAnnotation(ConsistentInvoke.class);
         //获取通过springEl表达式获取方法入参的关键字值
         String keyValue = SpelUtils.getMethodParameterValue(method, invocation.getArguments(), consistentInvoke.key());
-        return consistentInvokeHandler.invokeWithLocalTx(
-                invocation.getThis(),
+        return consistentInvokeHandler.invoke(
+                invocation,
                 method,
                 invocation.getArguments(),
                 consistentInvoke.maxRetryCount(),

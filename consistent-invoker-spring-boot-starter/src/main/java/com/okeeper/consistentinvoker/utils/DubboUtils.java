@@ -4,12 +4,15 @@ import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.*;
-import org.apache.dubbo.config.utils.ReferenceConfigCache;
+import org.apache.dubbo.config.context.ConfigManager;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.service.GenericService;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.apache.dubbo.common.constants.CommonConstants.DUBBO_PROTOCOL;
 
 /**
  * dubbo 泛化调用工具类
@@ -62,6 +65,7 @@ public class DubboUtils {
      */
     public Object invokeRpc(String targetAppName, String interfaceName, String methodName, String[] parameterTypes, Object request) {
         Object result = null;
+        Object response = null;
         try {
             GenericService genericService = findRpcInterface(targetAppName, interfaceName);
             //调用泛化接口，返回单一元素
@@ -75,15 +79,34 @@ public class DubboUtils {
     }
 
 
-    private ApplicationConfig getApplicationConfig() {
+    private boolean isDubbo3() {
+        // 获取Environment对象
+        Environment environment = applicationContext.getEnvironment();
+        // 获取环境配置值
+        Boolean isDubbo3 = environment.getProperty("consistent-invoker.use-dubbo3", Boolean.class, false);
+        log.info("current value consistent-invoker.use-dubbo3 = {}", isDubbo3);
+        return isDubbo3;
+    }
+
+    private ApplicationConfig getApplicationConfig() throws IllegalArgumentException {
+        if(isDubbo3()) {
+            return applicationContext.getBean(ConfigManager.class).getApplication().orElseThrow(() -> new IllegalArgumentException("dubbo.application is not configured."));
+        }
         return applicationContext.getBean(ApplicationConfig.class);
     }
 
-    private ProtocolConfig getProtocolConfig() {
+    private ProtocolConfig getProtocolConfig() throws IllegalArgumentException {
+        if(isDubbo3()) {
+            return applicationContext.getBean(ConfigManager.class).getProtocol(DUBBO_PROTOCOL).orElseThrow(() -> new IllegalArgumentException("dubbo.protocol is not configured."));
+        }
         return applicationContext.getBean(ProtocolConfig.class);
     }
 
-    private RegistryConfig getRegistryConfig() {
+    private RegistryConfig getRegistryConfig() throws IllegalArgumentException {
+        if(isDubbo3()) {
+            ConfigManager configManager =  applicationContext.getBean(ConfigManager.class);
+            return configManager.getRegistries().stream().findFirst().orElseThrow(() -> new IllegalArgumentException("dubbo.registry is not configured."));
+        }
         return applicationContext.getBean(RegistryConfig.class);
     }
 
@@ -104,7 +127,7 @@ public class DubboUtils {
             reference.setTimeout(3000);
             reference.setGeneric(true);
             reference.setGroup(targetAppName);
-            cachedService.putIfAbsent(path, ReferenceConfigCache.getCache().get(reference));
+            cachedService.putIfAbsent(path, reference.get());
             return cachedService.get(path);
         }else {
             return genericService;

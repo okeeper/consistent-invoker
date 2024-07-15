@@ -8,7 +8,9 @@ import com.okeeper.consistentinvoker.rpc.RetryInvokeRpcService;
 import com.okeeper.consistentinvoker.utils.ClassUtils;
 import com.okeeper.consistentinvoker.utils.DubboUtils;
 import com.alibaba.fastjson.JSON;
+import com.okeeper.consistentinvoker.utils.TxUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.aopalliance.intercept.MethodInvocation;
 import org.apache.skywalking.apm.toolkit.trace.RunnableWrapper;
 import org.springframework.aop.framework.AopProxyUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,11 +36,12 @@ public class ConsistentInvokeHandler {
     @Autowired
     private ConsistentInvokeRecordService consistentInvokeRecordService;
 
-    @Qualifier(ConsistentConstants.CONSISTENT_INVOKE_THREAD_POOL)
     @Autowired
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    private TxUtils txUtils;
 
-    public Object invokeWithLocalTx(Object target, Method method, Object[] args, int maxRetryCount, String key, boolean async) {
+
+    public Object invoke(MethodInvocation invocation, Method method, Object[] args, int maxRetryCount, String key, boolean async) throws Throwable {
+        Object target = invocation.getThis();
         ConsistentInvokeRecord consistentInvokeRecord = consistentInvokeRecordService.buildAsyncInvokeRecord(
                 DubboUtils.getInstance(applicationContext).getDubboApplicationName(),
                 target.getClass(),
@@ -46,10 +49,12 @@ public class ConsistentInvokeHandler {
                 args,
                 maxRetryCount,
                 key);
-        consistentInvokeRecordService.save(consistentInvokeRecord);
 
         //异步执行，等业务事物提交之后执行
         if(async) {
+            //先保存在执行
+            consistentInvokeRecordService.save(consistentInvokeRecord);
+
             //分布式事物同步
             ConsistentTransactionSynchronization synchronization = new ConsistentTransactionSynchronization(
                     //事务提交后直接调用
@@ -65,7 +70,7 @@ public class ConsistentInvokeHandler {
             return null;
         } else {
             //非异步时直接执行
-            return directInvoke(consistentInvokeRecord.getId(), target, method, args);
+            return processInvoke(consistentInvokeRecord, invocation, target, method, args);
         }
     }
 
@@ -89,7 +94,7 @@ public class ConsistentInvokeHandler {
             consistentInvokeRecordService.updateAsyncInvokeRecord(invokeId, true, null, returnObject, null);
             log.info("directInvoke {}#{} success, arguments={}, returnObject={}", target.getClass().getName(), method.getName(), args, returnObject);
             return returnObject;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("directInvoke {}#{} error, arguments={}", target.getClass().getName(), method.getName(), args, e);
             //访问失败，更新异步请求记录结果状态，并更新下一次重试的时间
             consistentInvokeRecordService.updateAsyncInvokeRecord(invokeId, false, null, null, e.getMessage());
@@ -97,8 +102,26 @@ public class ConsistentInvokeHandler {
         }
     }
 
-    public void asyncRetryInvokeInvoke(ConsistentInvokeRecord consistentInvokeRecord) {
-        threadPoolTaskExecutor.execute(new RunnableWrapper(() -> retryInvoke(consistentInvokeRecord, false)));
+    /**
+     * 继续执行spring aop逻辑
+     * 如果执行失败才记录当前执行的meta信息，待后续job进行重试，直至成功
+     * @param consistentInvokeRecord
+     * @param invocation
+     * @param target
+     * @param method
+     * @param args
+     * @return
+     * @throws Throwable
+     */
+    public Object processInvoke(ConsistentInvokeRecord consistentInvokeRecord, MethodInvocation invocation, Object target, Method method, Object[] args) throws Throwable{
+        try {
+            return invocation.proceed();
+        } catch (Throwable e) {
+            log.error("processInvoke {}#{} error, will save and retry later. arguments={}", target.getClass().getName(), method.getName(), args, e);
+            consistentInvokeRecord.setStatus(ConsistentInvokeRecordStatusEnum.FAIL.getType());
+            txUtils.processRequiresNew(() -> consistentInvokeRecordService.save(consistentInvokeRecord));
+            throw e;
+        }
     }
 
     public void retryInvoke(ConsistentInvokeRecord consistentInvokeRecord, boolean force) {

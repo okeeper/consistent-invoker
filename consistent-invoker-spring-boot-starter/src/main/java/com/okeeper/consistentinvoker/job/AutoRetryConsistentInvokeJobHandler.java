@@ -66,30 +66,29 @@ public class AutoRetryConsistentInvokeJobHandler extends IJobHandler {
           this.info("handle AutoRetryAsyncInvokeHandler success");
           return ReturnT.SUCCESS;
       }catch (Exception e) {
-          log.error("AutoRetryConsistentInvokeJobHandler error.", e);
-          throw e;
+          this.error("AutoRetryConsistentInvokeJobHandler error.", e);
+          return ReturnT.FAIL;
       }
     }
 
     void doExecuteByPage() {
         //定时任务重试
-        int pageNo = 1;
         int pageSize = consistentInvokerConfig.getRetryBatchSize();
 
         List<Integer> statusList = Arrays.asList(ConsistentInvokeRecordStatusEnum.WAIT_INVOKE.getType(),
                 ConsistentInvokeRecordStatusEnum.FAIL.getType());
         do {
-            List<ConsistentInvokeRecord> consistentInvokeRecords = consistentInvokeRecordService.queryWaitInvokeListByNextRetryTimePageList(statusList, pageNo, pageSize);
+            List<ConsistentInvokeRecord> consistentInvokeRecords = consistentInvokeRecordService.queryWaitInvokeListByNextRetryTimePageList(statusList, pageSize);
             if(!CollectionUtils.isEmpty(consistentInvokeRecords)) {
                 consistentInvokeRecords.forEach(consistentInvokeRecord -> {
                     try {
                         consistentInvokeHandler.invokeByRpc(consistentInvokeRecord);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.error("invokeByRpc error.", e);
                     }
                 });
-                pageNo ++;
             }else {
+                log.info("retryable record is empty!!!");
                 break;
             }
         } while (true);
@@ -104,6 +103,11 @@ public class AutoRetryConsistentInvokeJobHandler extends IJobHandler {
     public void info(String var1){
         log.info(var1);
         XxlJobLogger.log(var1);
+    }
+
+    public void error(String var1, Throwable throwable){
+        log.error(var1, throwable);
+        XxlJobLogger.log(var1, throwable);
     }
 }
 

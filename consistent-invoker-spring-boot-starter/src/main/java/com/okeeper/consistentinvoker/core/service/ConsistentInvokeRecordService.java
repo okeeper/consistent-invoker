@@ -117,8 +117,8 @@ public class ConsistentInvokeRecordService {
      * @param statusList
      * @return
      */
-    public List<ConsistentInvokeRecord> queryWaitInvokeListByNextRetryTimePageList(List<Integer> statusList, Integer pageNo, Integer pageSize) {
-        return consistentInvokeRecordMapper.queryWaitInvokeListByNextRetryTimePageList(statusList, (pageNo - 1)* pageSize, pageSize);
+    public List<ConsistentInvokeRecord> queryWaitInvokeListByNextRetryTimePageList(List<Integer> statusList, Integer pageSize) {
+        return consistentInvokeRecordMapper.queryWaitInvokeListByNextRetryTimePageList(statusList, 0, pageSize);
     }
 
     /**
